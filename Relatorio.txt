@@ -1,0 +1,79 @@
+RELATÓRIO CONSOLIDADO DE PENTEST: METASPLOITABLE 2
+
+Analista: Leonardo
+
+Alvo: 192.168.56.102
+
+Ambiente: Laboratório Isolado (VirtualBox Host-Only)
+
+Data: 26 de Março de 2026
+## 1. RESUMO EXECUTIVO
+
+Este relatório detalha a progressão de um teste de intrusão focado em múltiplas camadas de serviço. Foram explorados protocolos de transferência de arquivos (FTP), serviços de e-mail (SMTP) e interfaces de gerenciamento Web (HTTP). O sucesso em todas as frentes demonstra a criticidade do uso de configurações padrão e credenciais fracas em um ambiente de rede.
+## 2. ETAPA 1: EXPLORAÇÃO DE SERVIÇO FTP (PORTA 21)
+
+Objetivo: Validar a segurança do serviço vsFTPd 2.3.4.
+
+    Ações Realizadas:
+
+        Varredura de portas com nmap para identificar serviços ativos.
+
+        Tentativa de login manual (negada).
+
+        Ataque de força bruta utilizando a ferramenta Medusa com wordlists customizadas.
+
+    Vulnerabilidade: Uso de credenciais padrão.
+
+    Resultado: Acesso bem-sucedido com as credenciais msfadmin:msfadmin.
+
+    Impacto: Acesso total ao sistema de arquivos via FTP.
+
+## 3. ETAPA 2: ENUMERAÇÃO E FORÇA BRUTA SMTP (PORTA 25)
+
+Objetivo: Identificar usuários válidos no sistema operacional através do serviço de e-mail.
+
+    Ações Realizadas:
+
+        Utilização do comando smtp-user-enum com o método VRFY.
+
+        Identificação dos usuários legítimos sys e admin.
+
+        Criação de wordlist de senhas focada em termos comuns de sistema.
+
+        Ataque de força bruta com Medusa focado no usuário admin.
+
+    Vulnerabilidade: Comando VRFY habilitado (vazamento de informações) e senhas fracas.
+
+    Resultado: Credencial encontrada: admin:admin.
+
+    Impacto: Capacidade de interagir com o serviço de correio e confirmar identidades para ataques de engenharia social ou escalada.
+
+## 4. ETAPA 3: INVASÃO DE PAINEL ADMINISTRATIVO WEB (PORTA 80)
+
+Objetivo: Comprometer a interface de gerenciamento via navegador.
+
+    Ações Realizadas:
+
+        Mapeamento de diretórios (Web Crawling) identificando o caminho /admin.
+
+        Análise da página de login para identificar o método de autenticação (HTTP GET/POST).
+
+        Execução de ataque automatizado com o módulo HTTP do Medusa.
+
+    Vulnerabilidade: Painel administrativo exposto e falta de proteção contra tentativas sucessivas de login (Rate Limiting).
+
+    Resultado: Acesso administrativo garantido com admin:admin.
+
+    Impacto: Controle sobre as configurações de backend do servidor e visualização de logs internos.
+
+## 5. CONCLUSÃO E RECOMENDAÇÕES GERAIS
+
+O sistema Metasploitable 2 apresenta um nível de segurança crítico devido à negligência em configurações básicas. Para mitigar os riscos encontrados, recomenda-se:
+
+    Gestão de Credenciais: Implementar uma política de senhas fortes e alterar imediatamente todos os logins padrão de fábrica.
+
+    Hardening de Serviços: Desabilitar funções de enumeração de usuários (como o VRFY no SMTP) e ocultar versões de serviços nos banners de resposta.
+
+    Segurança de Perímetro: Restringir o acesso a diretórios sensíveis (como /admin) através de listas de controle de acesso (ACL) ou VPNs de gerenciamento.
+
+    Monitoramento: Instalar sistemas de detecção de intrusão (IDS/IPS) para bloquear IPs que realizem varreduras de portas ou ataques de força bruta.
